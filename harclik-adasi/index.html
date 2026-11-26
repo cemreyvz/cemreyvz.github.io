@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Harçlık Adası</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE  çocuklar için oyun; sıcak, cesur, kısa cümleler. Yetişkin ekranları sakin ve düzenli
+   IDEA   hazine adası masa oyunu: haftalık gemi harçlığı getirir, kumbara kulesi altınla dolar
+   PICTURE üstte ada sahnesi: deniz, deniz feneri, gemi, hedef kumbarası doluyor, fırtına bulutları
+   COLOUR turkuaz deniz baskın, kum sarısı destek, mercan vurgu; gece: koyu okyanus
+   TYPE   Baloo 2 başlıklar + Nunito metin
+   LAYOUT oyun telefon genişliğinde tek sütun (sahne, gösterge, panel); yetişkin ekranları geniş ızgara */
+:root{color-scheme:light dark;--bg:light-dark(#e6f8fa,#06202b);--card:light-dark(#ffffff,#0e2f3d);--ink:light-dark(#10323b,#e6f6f8);--muted:light-dark(#4a6870,#9ec3cb);--line:light-dark(#c9e7eb,#1d4a5a);--sea:light-dark(#0fa3b7,#0b5468);--sea2:light-dark(#6fd5de,#127085);--sky1:light-dark(#b6eef4,#0a2c3d);--sky2:light-dark(#eafcfd,#0b3a4c);--sand:light-dark(#ffd477,#d9a548);--sand2:light-dark(#e9b354,#a97a2c);--coral:light-dark(#f2493d,#ff7a6e);--gold:#f3b51b;--good:light-dark(#137a4f,#5bd69a);--bad:light-dark(#b8322a,#ff8f86);--leaf:light-dark(#2a9a58,#3fb873)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 Nunito,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3{font-family:'Baloo 2',Nunito,sans-serif;line-height:1.05;letter-spacing:-.01em;margin:0}
+button,input,select{font:inherit;color:inherit}
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;padding:10px max(16px,4vw);background:var(--sea);color:#fff}
+.brand{font:800 22px/1 'Baloo 2',sans-serif;color:#fff;text-decoration:none}
+.top nav{display:flex;gap:4px;flex-wrap:wrap}
+.top nav a{color:#fff;text-decoration:none;padding:8px 12px;border-radius:999px;font-weight:700;font-size:15px}
+.top nav a[aria-current=page]{background:rgba(255,255,255,.22)}
+.view{padding:16px max(16px,4vw) 40px}
+.game{max-width:560px;margin:0 auto;background:var(--card);border-radius:24px;overflow:hidden;box-shadow:0 1px 0 var(--line),0 0 0 1px var(--line)}
+.scene{aspect-ratio:400/210;display:block;width:100%;background:var(--sky2)}
+.scene svg{display:block;width:100%;height:100%}
+#shipMove{transition:transform 1.3s cubic-bezier(.3,.7,.3,1)}
+#storm{opacity:0;transition:opacity .8s}
+#storm.on{opacity:1}
+#beam{opacity:0;transition:opacity .6s}
+#beam.on{opacity:1}
+#jarFill{transition:y .8s,height .8s}
+.hud{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.hud div{font-size:13px;color:var(--muted);line-height:1.2}
+.hud b{display:block;font:800 18px/1.2 'Baloo 2',sans-serif;color:var(--ink);white-space:nowrap}
+.bar{height:10px;border-radius:9px;background:var(--line);overflow:hidden;grid-column:1/-1}
+.bar i{display:block;height:100%;background:var(--gold);border-radius:9px;transition:width .8s}
+.panel{padding:20px 18px 24px}
+.panel h2{font-size:clamp(26px,6vw,34px);margin-bottom:8px}
+.panel p{margin:0 0 14px}
+.kicker{font-weight:800;color:var(--coral);font-size:15px;margin-bottom:4px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 20px;border-radius:14px;border:0;background:var(--coral);color:#fff;font-weight:800;font-size:17px;cursor:pointer}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.btn.small{min-height:40px;font-size:15px;padding:6px 14px}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.opts{display:grid;gap:10px;margin:14px 0}
+.opt{text-align:left;min-height:56px;padding:12px 16px;border-radius:16px;border:2px solid var(--line);background:var(--card);font-weight:700;font-size:17px;cursor:pointer}
+.opt:hover{border-color:var(--sea)}
+.field{display:grid;gap:6px;margin-bottom:14px}
+.field label{font-weight:700}
+.field input,.field select{min-height:48px;border-radius:12px;border:2px solid var(--line);background:var(--card);padding:8px 12px;font-size:16px}
+.check{display:flex;gap:10px;align-items:flex-start;margin-bottom:16px;font-size:15px}
+.check input{width:22px;height:22px;flex:none;margin-top:2px}
+.flags,.goals{display:grid;grid-template-columns:repeat(auto-fit,minmax(76px,1fr));gap:10px;margin:8px 0 16px}
+.pick{border:2px solid var(--line);border-radius:16px;background:var(--card);padding:10px;cursor:pointer;display:grid;gap:4px;justify-items:center;font-weight:700;text-align:center}
+.pick[aria-pressed=true]{border-color:var(--coral);background:color-mix(in srgb,var(--coral) 10%,var(--card))}
+.pick svg{width:64px;height:48px}
+.pick small{color:var(--muted);font-weight:700}
+.jars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+.jar{border-radius:18px;padding:12px 8px;text-align:center;border:2px solid var(--line)}
+.jar h3{font-size:19px}
+.jar .amt{font:800 26px/1.1 'Baloo 2',sans-serif;margin:6px 0;white-space:nowrap}
+.jar .row{display:flex;justify-content:center;gap:6px}
+.jar .row button{width:44px;height:44px;border-radius:12px;border:2px solid var(--line);background:var(--card);font-size:22px;font-weight:800;cursor:pointer}
+.jar .all{margin-top:6px;border:0;background:none;color:var(--muted);font-weight:700;font-size:13px;text-decoration:underline;cursor:pointer;min-height:32px}
+.jar.h{background:color-mix(in srgb,var(--coral) 9%,var(--card))}
+.jar.b{background:color-mix(in srgb,var(--gold) 16%,var(--card))}
+.jar.p{background:color-mix(in srgb,var(--sea) 11%,var(--card))}
+.left{font-weight:800;text-align:center;margin-bottom:12px}
+.fb{border-radius:16px;padding:14px 16px;margin:6px 0 16px;font-weight:700}
+.fb.good{background:color-mix(in srgb,var(--good) 14%,var(--card));border-left:6px solid var(--good)}
+.fb.bad{background:color-mix(in srgb,var(--bad) 12%,var(--card));border-left:6px solid var(--bad)}
+.fb.ok{background:color-mix(in srgb,var(--gold) 16%,var(--card));border-left:6px solid var(--gold)}
+.dots{display:flex;gap:6px;margin-bottom:10px}
+.dots i{width:28px;height:6px;border-radius:4px;background:var(--line)}
+.dots i.on{background:var(--coral)}
+.note{max-width:560px;margin:12px auto 0;color:var(--muted);font-size:13px;text-align:center}
+.wrap{max-width:1040px;margin:0 auto}
+.wrap>h1{font-size:clamp(30px,5vw,44px);margin:8px 0 6px}
+.lede{color:var(--muted);margin:0 0 18px;max-width:66ch}
+.grid2{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:16px;align-items:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
+.card h2{font-size:22px;margin-bottom:10px}
+.status{font-size:14px;color:var(--muted);min-height:20px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(9em,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.kpi span{display:block;color:var(--muted);font-size:14px}
+.kpi b{font:800 clamp(22px,2.6vw,30px)/1.1 'Baloo 2',sans-serif;white-space:nowrap}
+.dumb{display:grid;gap:12px}
+.drow{display:grid;grid-template-columns:minmax(0,10em) minmax(0,1fr) 7.5em;gap:10px;align-items:center}
+.track{position:relative;height:22px}
+.track::before{content:"";position:absolute;left:0;right:0;top:10px;height:2px;background:var(--line)}
+.track .ln{position:absolute;top:9px;height:4px;background:var(--good);border-radius:2px}
+.track .ln.neg{background:var(--bad)}
+.track .d{position:absolute;top:4px;width:14px;height:14px;border-radius:50%;margin-left:-7px}
+.track .d.pre{background:var(--card);border:3px solid var(--muted)}
+.track .d.post{background:var(--sea)}
+.drow .v{font-size:14px;white-space:nowrap;text-align:right;color:var(--muted)}
+.legend{display:flex;gap:16px;font-size:14px;color:var(--muted);margin-bottom:12px;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:8px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:700}
+td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:800;background:var(--line)}
+.tag.ok{background:color-mix(in srgb,var(--good) 18%,var(--card));color:var(--good)}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.wk{display:grid;gap:8px}
+.wkr{display:grid;grid-template-columns:4.5em minmax(0,1fr) 3.5em;gap:8px;align-items:center;font-size:14px}
+.wkr .t{height:16px;border-radius:8px;background:var(--line);overflow:hidden}
+.wkr .t i{display:block;height:100%;background:var(--gold)}
+.cl{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+.cl li{display:grid;grid-template-columns:minmax(0,1fr) 4em 4em;gap:8px;font-size:15px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.cl .y{color:var(--good);font-weight:800}.cl .x{color:var(--bad);font-weight:800}
+.talk{background:color-mix(in srgb,var(--sea) 10%,var(--card));border-radius:14px;padding:12px 14px;margin-top:14px}
+.empty{color:var(--muted);padding:12px 0}
+@media(max-width:760px){.grid2{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.drow{grid-template-columns:minmax(0,1fr) 6.5em}.drow .track{grid-column:1/-1;grid-row:2}.stack thead{display:none}.stack tr{display:grid;padding-block:8px;border-bottom:1px solid var(--line)}.stack td{display:flex;justify-content:space-between;gap:12px;border:0;padding:3px 0}.stack td::before{content:attr(data-l);color:var(--muted);font-weight:700}.stack td.n{text-align:right}.hud b{font-size:16px}.jar .amt{font-size:22px}.jar h3{font-size:16px}}
+@media(prefers-reduced-motion:reduce){#shipMove,#storm,#beam,#jarFill,.bar i{transition:none}}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="#oyun">Harçlık Adası</a>
+  <nav aria-label="Görünümler"><a href="#oyun" data-v="oyun">Oyun</a><a href="#ebeveyn" data-v="ebeveyn">Ebeveyn</a><a href="#arastirma" data-v="arastirma">Araştırma</a></nav>
+</header>
+<main>
+<section id="v-oyun" class="view">
+  <div class="game">
+    <div class="scene" aria-hidden="true">
+      <svg viewBox="0 0 400 210" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--sky1)"/><stop offset="1" style="stop-color:var(--sky2)"/></linearGradient>
+          <linearGradient id="goldG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd84d"/><stop offset="1" stop-color="#e09a00"/></linearGradient>
+          <clipPath id="jarClip"><rect x="170" y="74" width="60" height="74" rx="14"/></clipPath>
+        </defs>
+        <rect width="400" height="210" fill="url(#sky)"/>
+        <circle cx="350" cy="36" r="18" fill="var(--gold)" opacity=".85"/>
+        <g id="beam"><polygon points="308,72 400,52 400,98" fill="var(--gold)" opacity=".35"/></g>
+        <rect y="146" width="400" height="64" fill="var(--sea)"/>
+        <path d="M0 160 q20 -6 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0" fill="none" stroke="var(--sea2)" stroke-width="3" opacity=".7"/>
+        <path d="M0 184 q25 -6 50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0" fill="none" stroke="var(--sea2)" stroke-width="3" opacity=".5"/>
+        <ellipse cx="205" cy="156" rx="150" ry="20" fill="var(--sand2)"/>
+        <ellipse cx="205" cy="150" rx="144" ry="18" fill="var(--sand)"/>
+        <path d="M100 150 C98 130 102 112 112 96" stroke="#8a5a2b" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <g fill="var(--leaf)"><ellipse cx="96" cy="96" rx="22" ry="7" transform="rotate(-20 96 96)"/><ellipse cx="128" cy="94" rx="22" ry="7" transform="rotate(22 128 94)"/><ellipse cx="110" cy="86" rx="20" ry="6" transform="rotate(-70 110 86)"/><ellipse cx="122" cy="104" rx="18" ry="6" transform="rotate(50 122 104)"/></g>
+        <polygon points="287,150 313,150 306,82 294,82" fill="#fff"/>
+        <polygon points="291,128 309,128 310,140 290,140" fill="var(--coral)"/>
+        <polygon points="293,100 307,100 308,112 292,112" fill="var(--coral)"/>
+        <rect x="292" y="72" width="16" height="10" fill="var(--gold)"/>
+        <polygon points="288,72 312,72 300,60" fill="var(--coral)"/>
+        <rect x="186" y="66" width="28" height="10" rx="3" fill="var(--sand2)"/>
+        <rect x="170" y="74" width="60" height="74" rx="14" fill="#fff" opacity=".55"/>
+        <rect id="jarFill" x="170" y="148" width="60" height="0" fill="url(#goldG)" clip-path="url(#jarClip)"/>
+        <rect x="170" y="74" width="60" height="74" rx="14" fill="none" stroke="var(--sand2)" stroke-width="3"/>
+        <path d="M180 84 v40" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".6"/>
+        <rect x="28" y="160" width="74" height="6" fill="#8a5a2b"/>
+        <rect x="34" y="160" width="4" height="18" fill="#6b4220"/><rect x="92" y="160" width="4" height="18" fill="#6b4220"/>
+        <g id="storm">
+          <g fill="#55616b"><ellipse cx="90" cy="34" rx="44" ry="16"/><ellipse cx="128" cy="26" rx="30" ry="15"/><ellipse cx="230" cy="30" rx="48" ry="17"/><ellipse cx="268" cy="38" rx="30" ry="13"/></g>
+          <g stroke="#7aa6bf" stroke-width="2" stroke-linecap="round"><path d="M70 56 l-6 14"/><path d="M98 56 l-6 14"/><path d="M126 50 l-6 14"/><path d="M214 54 l-6 14"/><path d="M244 56 l-6 14"/><path d="M272 54 l-6 14"/></g>
+          <polygon points="160,40 150,62 160,62 152,82 172,54 162,54 170,40" fill="var(--gold)"/>
+        </g>
+        <g transform="translate(0 164)"><g id="shipMove" style="transform:translateX(-90px)">
+          <path d="M0 0 h56 l-9 14 h-38z" fill="#8a5a2b"/>
+          <line x1="28" y1="0" x2="28" y2="-38" stroke="#6b4220" stroke-width="3"/>
+          <polygon points="30,-36 30,-4 52,-4" fill="#fff"/>
+          <polygon id="flag" points="28,-38 28,-30 40,-34" fill="var(--coral)"/>
+        </g></g>
+      </svg>
+    </div>
+    <div class="hud" id="hud"></div>
+    <div class="panel" id="panel" aria-live="polite"></div>
+  </div>
+  <p class="note">Prototip: banka bakiyesi simüle edilir, gerçek para hareketi yoktur. Fiyatlar örnektir.</p>
+</section>
+
+<section id="v-ebeveyn" class="view" hidden>
+  <div class="wrap">
+    <h1>Ebeveyn paneli</h1>
+    <p class="lede">Harçlığı ve faizi siz belirlersiniz. Çocuğunuzun oyunda hangi kavramı kavradığını ve haftalık birikim kararlarını burada görürsünüz.</p>
+    <div class="grid2">
+      <form class="card" id="setForm">
+        <h2>Ayarlar</h2>
+        <div class="field"><label for="setHarclik">Haftalık harçlık (TL)</label><input id="setHarclik" type="number" min="50" max="1000" step="10" inputmode="numeric"></div>
+        <div class="field"><label for="setFaiz">Ebeveyn faizi (haftalık %)</label><input id="setFaiz" type="number" min="0" max="20" step="1" inputmode="numeric"></div>
+        <button class="btn small" type="submit">Kaydet</button>
+        <p class="status" id="setStatus"></p>
+      </form>
+      <div class="card">
+        <div class="field"><label for="kidSel">Çocuk</label><select id="kidSel"></select></div>
+        <div id="kidOut"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="v-arastirma" class="view" hidden>
+  <div class="wrap">
+    <h1 id="rTitle">Pilot sonuçları</h1>
+    <p class="lede" id="rMode">Veriler yükleniyor…</p>
+    <div class="kpis" id="kpis"></div>
+    <div class="card">
+      <h2>Kavram bazında doğru cevap oranı</h2>
+      <div class="legend"><span><i style="border:3px solid var(--muted);background:var(--card)"></i>Ön test</span><span><i style="background:var(--sea)"></i>Son test</span></div>
+      <div class="dumb" id="dumb"></div>
+    </div>
+    <div class="tools"><button class="btn small" id="csvCopy" type="button">CSV kopyala</button><button class="btn small ghost" id="csvDown" type="button" hidden>CSV indir</button><span class="status" id="csvStatus"></span></div>
+    <div class="card">
+      <h2>Oturumlar</h2>
+      <div class="scroll"><table class="stack" id="sessTable"></table></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<script>
+{
+const CONCEPTS={ihtiyac:'İhtiyaç ve istek',plan:'Birikim planı',karsilastirma:'Fiyat karşılaştırma',enflasyon:'Enflasyon',guvenlik:'Dijital güvenlik'};
+const CK=Object.keys(CONCEPTS);
+const PRE=[
+ {k:'ihtiyac',q:'Hangisi bir İHTİYAÇ?',o:['Yeni oyun kostümü','Okul ayakkabısı','Üçüncü dondurma'],c:1},
+ {k:'plan',q:'Haftada 50 TL biriktirirsen 200 TL’lik top için kaç hafta gerekir?',o:['2 hafta','4 hafta','8 hafta'],c:1},
+ {k:'karsilastirma',q:'Aynı kalem üç dükkanda 30 TL, 25 TL ve 40 TL. Hangisinden almak en akıllıca?',o:['30 TL','40 TL','25 TL'],c:2},
+ {k:'enflasyon',q:'Geçen yıl 10 TL olan simit bu yıl 15 TL. Ne oldu?',o:['Paramızla daha az şey alabiliyoruz','Simit büyüdü','Paramız çoğaldı'],c:0},
+ {k:'guvenlik',q:'Oyunda biri “Bedava elmas için şifreni yaz” diyor. Ne yaparsın?',o:['Şifremi yazarım','Bir yetişkine gösteririm','Arkadaşımın şifresini veririm'],c:1}];
+const POST=[
+ {k:'ihtiyac',q:'Hangisi bir İSTEK?',o:['Kışlık mont','Diş fırçası','Yeni çıkartma albümü'],c:2},
+ {k:'plan',q:'Haftada 100 TL biriktirirsen 500 TL’lik kaykay için kaç hafta gerekir?',o:['5 hafta','4 hafta','10 hafta'],c:0},
+ {k:'karsilastirma',q:'2 defter lazım. A dükkanında 2 defter 60 TL, B dükkanında tanesi 25 TL. Hangisi ucuz?',o:['A dükkanı','İkisi aynı','B dükkanı'],c:2},
+ {k:'enflasyon',q:'Fiyatlar her yıl artıyorsa, parayı kumbarada hiç büyütmeden saklarsan ne olur?',o:['Para kendiliğinden çoğalır','Aynı parayla daha az şey alırsın','Hiçbir şey değişmez'],c:1},
+ {k:'guvenlik',q:'Annenin kart bilgilerini isteyen bir mesaj gelirse ne yaparsın?',o:['Göndermem, aileme gösteririm','Hemen gönderirim','Oyundaki arkadaşıma sorarım'],c:0}];
+const GOALS=[
+ {id:'kaykay',ad:'Kaykay',fiyat:450,svg:'<rect x="6" y="22" width="52" height="8" rx="4" fill="#f2493d"/><circle cx="16" cy="36" r="5" fill="#333"/><circle cx="48" cy="36" r="5" fill="#333"/>'},
+ {id:'yapi',ad:'Yapı seti',fiyat:400,svg:'<rect x="8" y="24" width="22" height="16" rx="2" fill="#2f7de1"/><rect x="32" y="24" width="22" height="16" rx="2" fill="#f3b51b"/><rect x="20" y="8" width="22" height="16" rx="2" fill="#f2493d"/>'},
+ {id:'top',ad:'Forma ve top',fiyat:350,svg:'<circle cx="32" cy="24" r="17" fill="#fff" stroke="#333" stroke-width="2"/><polygon points="32,15 40,21 37,30 27,30 24,21" fill="#333"/>'}];
+const FLAGS=[['#f2493d','Mercan'],['#f3b51b','Altın'],['#2f7de1','Okyanus'],['#8b5cf6','Mor']];
+const WEEKS=[
+ {k:'ihtiyac',yer:'Kantinde',text:'Kalemin bitti, yarın derste lazım. Kantinde kalem 40 TL, en sevdiğin cips 30 TL.',o:[
+   {t:'Kalemi alırım',cost:40,g:'good',fb:'Doğru seçim! Kalem bir ihtiyaç, derste lazım. Cips bir istek: olmasa da olur.'},
+   {t:'Cipsi alırım',cost:30,g:'bad',fb:'Cips güzeldi ama derste kalemsiz kaldın. Önce ihtiyaçlar, sonra istekler.'},
+   {t:'İkisini de alırım',cost:70,g:'ok',fb:'İkisini de aldın. Paran yetiyorsa sorun yok, ama önce ihtiyacı düşünmek iyi bir alışkanlık.'}]},
+ {k:'karsilastirma',yer:'Pazar yeri',text:'Aynı futbol topu üç tezgahta farklı fiyatta: 140 TL, 95 TL ve 120 TL.',o:[
+   {t:'140 TL’lik tezgahtan alırım',cost:140,g:'bad',fb:'Aynı top başka tezgahta 45 TL daha ucuzdu. Almadan önce fiyatları karşılaştır.'},
+   {t:'95 TL’lik tezgahtan alırım',cost:95,g:'good',fb:'Harika! Karşılaştırdın ve 45 TL kazandın.'},
+   {t:'Almıyorum, hedefim için biriktiriyorum',cost:0,g:'good',fb:'Hedefine odaklandın. Şart olmayan bir şeyi almamak da akıllıca bir karar.'}]},
+ {k:'enflasyon',yer:'Fırtınadan sonra',text:'Fiyatlar artmaya devam edebilir. Kumbaradaki parayı nerede saklayacaksın?',o:[
+   {t:'Yastığımın altında',store:'yastik',g:'bad',fb:'Yastık altındaki para büyümez. Fiyatlar artınca aynı parayla daha az şey alırsın. Buna enflasyon denir.'},
+   {t:'Fener Kumbarası’nda (faizli)',store:'fener',g:'good',fb:'Fener Kumbarası her hafta faiz verir. Faiz, paranın fiyat artışları karşısında erimesini yavaşlatır.'}]},
+ {k:'guvenlik',yer:'Oyunda bir mesaj',text:'Oyun oynarken bir mesaj geldi: “Bedava 1000 elmas! Hemen şifreni yaz.”',o:[
+   {t:'Şifremi yazarım',lose:100,g:'bad',fb:'Bu bir tuzaktı. Hesabın çalındı ve oyunda kumbarandan 100 TL gitti. Şifre kimseyle paylaşılmaz.'},
+   {t:'Bir yetişkine gösteririm',g:'good',fb:'Çok doğru! Şifre ya da kart bilgisi isteyen mesajlar dolandırıcılıktır. Bir yetişkine göstermek en güvenlisi.'},
+   {t:'Linke tıklayıp bakarım',lose:100,g:'bad',fb:'Link sahte bir sayfaya gitti ve oyunda kumbarandan 100 TL gitti. Tanımadığın linklere tıklama.'}]}];
+
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const tl=n=>Math.round(n).toLocaleString('tr-TR')+' TL';
+const r10=n=>Math.round(n/10)*10;
+const ls={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+
+let SET={harclik:200,faiz:10};
+let SESS=[];
+let db=null,dbWrite=true,mode='local';
+let S=null,t0=0,kidPick='';
+
+function fresh(){return{id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),alias:'',age:'',flag:0,consent:false,step:'start',qi:0,pre:[],post:[],goal:null,goalPrice:0,week:1,savings:0,hearts:0,store:'',split:null,edits:0,weeks:[],storm:false,startedAt:new Date().toISOString(),settings:{...SET},status:'devam',msg:''}}
+
+/* ---------- scene ---------- */
+function scene(){
+  const g=S.goal?GOALS.find(x=>x.id===S.goal):null;
+  const pct=g?Math.max(0,Math.min(1,S.savings/S.goalPrice)):0;
+  const f=$('#jarFill');f.setAttribute('y',148-74*pct);f.setAttribute('height',74*pct);
+  $('#storm').classList.toggle('on',S.storm&&S.step!=='final'&&S.step!=='post'&&S.step!=='done');
+  $('#beam').classList.toggle('on',S.store==='fener');
+  $('#flag').setAttribute('fill',FLAGS[S.flag][0]);
+  const docked=['arrive','storm','split','event','result'].includes(S.step);
+  $('#shipMove').style.transform=docked?'translateX(34px)':'translateX(-90px)';
+  const hud=$('#hud');
+  if(!g){hud.innerHTML='<div>Ada<b>Harçlık Adası</b></div><div>Oyuncu<b>'+(S.alias?esc(S.alias):'Yeni kaptan')+'</b></div><div>Hedef<b>Seçilecek</b></div>';return}
+  hud.innerHTML='<div>Hafta<b>'+Math.min(S.week,4)+' / 4</b></div><div>Kumbara<b>'+tl(S.savings)+'</b></div><div>'+esc(g.ad)+'<b>'+tl(S.goalPrice)+'</b></div><div class="bar" aria-label="Hedefe ilerleme"><i style="width:'+Math.round(pct*100)+'%"></i></div>';
+}
+
+/* ---------- screens ---------- */
+function render(){
+  const p=$('#panel');scene();t0=performance.now();
+  const st=S.step;
+  if(st==='start'){
+    p.innerHTML='<div class="kicker">Hoş geldin, kaptan!</div><h2>Kendi adanı kur</h2><p>Her hafta gemin harçlığını getirecek. Sen karar vereceksin: harcamak mı, biriktirmek mi, paylaşmak mı?</p>'+
+    '<label class="check"><input type="checkbox" id="cons"'+(S.consent?' checked':'')+'><span><b>Yetişkin için:</b> Ebeveyn onayı alındı. Gerçek isim yazılmayacak, takma ad kullanılacak.</span></label>'+
+    '<div class="field"><label for="alias">Takma ad</label><input id="alias" maxlength="20" autocomplete="off" value="'+esc(S.alias)+'" placeholder="Örn. Kaptan Deniz"></div>'+
+    '<div class="field"><label for="age">Yaş</label><select id="age"><option value="">Seç</option>'+[7,8,9,10,11,12,13].map(a=>'<option'+(String(S.age)===String(a)?' selected':'')+'>'+a+'</option>').join('')+'</select></div>'+
+    '<div style="font-weight:700">Bayrağını seç</div><div class="flags">'+FLAGS.map((f,i)=>'<button type="button" class="pick" data-flag="'+i+'" aria-pressed="'+(S.flag===i)+'"><svg viewBox="0 0 64 48"><line x1="16" y1="6" x2="16" y2="44" stroke="#6b4220" stroke-width="3"/><polygon points="18,6 18,26 52,16" fill="'+f[0]+'"/></svg>'+f[1]+'</button>').join('')+'</div>'+
+    '<button class="btn" id="go">Başla</button>';
+    const chk=()=>{S.alias=$('#alias').value.trim();S.age=$('#age').value;S.consent=$('#cons').checked;$('#go').disabled=!(S.alias&&S.age&&S.consent)};
+    ['#alias','#age','#cons'].forEach(s=>$(s).addEventListener('input',chk));$('#cons').addEventListener('change',chk);chk();
+    p.querySelectorAll('[data-flag]').forEach(b=>b.onclick=()=>{S.flag=+b.dataset.flag;chk();render()});
+    $('#go').onclick=()=>{S.settings={...SET};S.step='pre';S.qi=0;render()};
+  }
+  else if(st==='pre'||st==='post'){
+    const Q=st==='pre'?PRE:POST,q=Q[S.qi];
+    p.innerHTML='<div class="dots">'+Q.map((_,i)=>'<i class="'+(i<=S.qi?'on':'')+'"></i>').join('')+'</div><div class="kicker">'+(st==='pre'?'Başlamadan önce':'Son olarak')+' · Soru '+(S.qi+1)+' / 5</div><h2>'+esc(q.q)+'</h2>'+(S.qi===0?'<p>Doğru ya da yanlış yok, ne düşünüyorsan onu seç.</p>':'')+'<div class="opts">'+q.o.map((o,i)=>'<button class="opt" data-i="'+i+'">'+esc(o)+'</button>').join('')+'</div>';
+    p.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;(st==='pre'?S.pre:S.post).push({k:q.k,a:i,ok:i===q.c,ms:Math.round(performance.now()-t0)});
+      if(S.qi<4){S.qi++;render()}else if(st==='pre'){S.step='goal';save();render()}else finish()});
+  }
+  else if(st==='goal'){
+    p.innerHTML='<div class="kicker">Hedefini seç</div><h2>Ne için biriktireceksin?</h2><p>Hedefin adadaki kumbara kulesinde duracak. Kule dolunca hedefine ulaşırsın.</p><div class="goals">'+GOALS.map(g=>'<button class="pick" data-g="'+g.id+'" aria-pressed="false"><svg viewBox="0 0 64 48">'+g.svg+'</svg>'+esc(g.ad)+'<small>'+tl(g.fiyat)+'</small></button>').join('')+'</div>';
+    p.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{const g=GOALS.find(x=>x.id===b.dataset.g);S.goal=g.id;S.goalPrice=g.fiyat;S.week=1;S.step='arrive';render()});
+  }
+  else if(st==='arrive'){
+    let extra='';
+    if(S.week===4&&S.store==='fener'){if(S.faiz4==null){S.faiz4=Math.round(S.savings*S.settings.faiz/100);S.savings+=S.faiz4}const f=S.faiz4;extra='<div class="fb good">Fener Kumbaran büyüdü: %'+S.settings.faiz+' faiz ile +'+tl(f)+'</div>';scene()}
+    p.innerHTML='<div class="dots">'+[1,2,3,4].map(i=>'<i class="'+(i<=S.week?'on':'')+'"></i>').join('')+'</div><div class="kicker">'+S.week+'. hafta</div><h2>Gemin geldi: '+tl(S.settings.harclik)+' harçlık!</h2>'+extra+'<p>Bu parayı kavanozlarına paylaştırma zamanı.</p><button class="btn" id="nx">Kavanozlara böl</button>';
+    $('#nx').onclick=()=>{if(S.week===3&&!S.storm){S.step='storm'}else{S.step='split';S.split={h:0,b:0,p:0};S.edits=0}render()};
+  }
+  else if(st==='storm'){
+    if(!S.stormFrom){S.storm=true;S.stormFrom=S.goalPrice;S.goalPrice=r10(S.goalPrice*1.2)}const old=S.stormFrom;scene();
+    const g=GOALS.find(x=>x.id===S.goal);
+    p.innerHTML='<div class="kicker">Dikkat!</div><h2>Fiyat Fırtınası!</h2><p>Adadaki her şeyin fiyatı %20 arttı. '+esc(g.ad)+' artık <b>'+tl(old)+'</b> değil, <b>'+tl(S.goalPrice)+'</b>.</p><p>Kumbarandaki para aynı kaldı ama artık daha az şey alıyor.</p><button class="btn" id="nx">Devam</button>';
+    $('#nx').onclick=()=>{S.step='split';S.split={h:0,b:0,p:0};S.edits=0;render()};
+  }
+  else if(st==='split'){
+    const H=S.settings.harclik,sp=S.split,left=H-sp.h-sp.b-sp.p;
+    const jar=(k,cls,name,sub)=>'<div class="jar '+cls+'"><h3>'+name+'</h3><div class="amt">'+tl(sp[k])+'</div><div class="row"><button type="button" data-j="'+k+'" data-d="-10" aria-label="'+name+' azalt">−</button><button type="button" data-j="'+k+'" data-d="10" aria-label="'+name+' artır">+</button></div><button type="button" class="all" data-all="'+k+'">Kalanı koy</button><div style="font-size:13px;color:var(--muted)">'+sub+'</div></div>';
+    p.innerHTML='<div class="kicker">'+S.week+'. hafta · '+tl(H)+'</div><h2>Kavanozlara böl</h2><div class="jars">'+jar('h','h','Harca','Bu hafta')+jar('b','b','Biriktir','Hedefin için')+jar('p','p','Paylaş','Bir iyilik')+'</div><div class="left">'+(left?'Dağıtılacak: '+tl(left):'Hepsi paylaştırıldı!')+'</div><button class="btn" id="nx"'+(left?' disabled':'')+'>Tamam</button>';
+    p.querySelectorAll('[data-j]').forEach(b=>b.onclick=()=>{const k=b.dataset.j,d=+b.dataset.d;const nl=left-d;if(sp[k]+d<0||nl<0)return;sp[k]+=d;S.edits++;render()});
+    p.querySelectorAll('[data-all]').forEach(b=>b.onclick=()=>{if(!left)return;sp[b.dataset.all]+=left;S.edits++;render()});
+    $('#nx').onclick=()=>{S.savings+=sp.b;S.hearts+=sp.p;S.step='event';render()};
+  }
+  else if(st==='event'){
+    const w=WEEKS[S.week-1];
+    p.innerHTML='<div class="kicker">Haftanın kararı · '+esc(w.yer)+'</div><h2>'+esc(w.text)+'</h2><p>Harca kavanozunda <b>'+tl(S.split.h)+'</b>, kumbarada <b>'+tl(S.savings)+'</b> var.</p><div class="opts">'+w.o.map((o,i)=>'<button class="opt" data-i="'+i+'">'+esc(o.t)+(o.cost?' <span style="color:var(--muted)">('+tl(o.cost)+')</span>':'')+'</button>').join('')+'</div>';
+    p.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+      const i=+b.dataset.i,o=w.o[i],ms=Math.round(performance.now()-t0);let note='';
+      if(o.cost){const fromH=Math.min(o.cost,S.split.h),rest=o.cost-fromH;if(rest>0){S.savings=Math.max(0,S.savings-rest);note='Harca kavanozu yetmedi, '+tl(rest)+' kumbaradan gitti.'}}
+      if(o.lose)S.savings=Math.max(0,S.savings-o.lose);
+      if(o.store)S.store=o.store;
+      const H=S.settings.harclik;
+      S.weeks.push({w:S.week,h:S.split.h,b:S.split.b,p:S.split.p,pay:Math.round(S.split.b/H*100),edits:S.edits,k:w.k,choice:i,g:o.g,ms,savings:S.savings});
+      S.last={fb:o.fb,g:o.g,note};S.step='result';render()});
+  }
+  else if(st==='result'){
+    const L=S.last,lab={good:'Akıllıca!',ok:'Fena değil',bad:'Hmm, bir dahakine'}[L.g];
+    p.innerHTML='<div class="kicker">'+S.week+'. hafta sonucu</div><h2>'+lab+'</h2><div class="fb '+L.g+'">'+esc(L.fb)+'</div>'+(L.note?'<p>'+esc(L.note)+'</p>':'')+'<p>Kumbaran: <b>'+tl(S.savings)+'</b>. Hedefe '+(S.savings>=S.goalPrice?'ulaştın!':'<b>'+tl(S.goalPrice-S.savings)+'</b> kaldı.')+'</p><button class="btn" id="nx">'+(S.week<4?'Sonraki hafta':'Adaya bak')+'</button>';
+    $('#nx').onclick=()=>{if(S.week<4){S.week++;S.step='arrive'}else{S.step='final';S.week=4}render()};
+  }
+  else if(st==='final'){
+    if(S.store==='fener'&&!S.finalFaiz){S.finalFaiz=Math.round(S.savings*S.settings.faiz/100);S.savings+=S.finalFaiz;scene()}
+    const g=GOALS.find(x=>x.id===S.goal),ok=S.savings>=S.goalPrice;S.reached=ok;
+    p.innerHTML='<div class="kicker">4 hafta bitti</div><h2>'+(ok?esc(g.ad)+' senin!':'Hedefe çok az kaldı')+'</h2>'+(S.finalFaiz?'<div class="fb good">Son hafta faizi: +'+tl(S.finalFaiz)+'</div>':'')+'<p>Kumbaranda <b>'+tl(S.savings)+'</b> birikti'+(ok?'.':', hedefin '+tl(S.goalPrice)+'. Gerçek hayatta bir hafta daha biriktirirsen ulaşırsın.')+'</p><p>Paylaş kavanozundan <b>'+tl(S.hearts)+'</b> ile iyilik yaptın.</p><button class="btn" id="nx">Son 5 soru</button>';
+    $('#nx').onclick=()=>{S.step='post';S.qi=0;render()};
+  }
+  else if(st==='done'){
+    const sc=S.post.filter(x=>x.ok).length;
+    p.innerHTML='<div class="kicker">Tebrikler, kaptan '+esc(S.alias)+'!</div><h2>Ada turunu tamamladın</h2><p>Son sorularda 5 sorudan <b>'+sc+'</b> tanesini bildin. Ebeveynin, neler öğrendiğini kendi ekranında görebilir.</p><p class="status" id="saveSt">'+esc(S.saveMsg||'')+'</p><button class="btn ghost" id="nx">Yeni oyuncu (yetişkin)</button>';
+    $('#nx').onclick=()=>{S=fresh();render()};
+  }
+}
+
+function finish(){
+  S.status='tamam';S.finishedAt=new Date().toISOString();
+  S.durationSec=Math.round((Date.parse(S.finishedAt)-Date.parse(S.startedAt))/1000);
+  S.step='done';save();render();
+}
+
+/* ---------- storage ---------- */
+function record(s){
+  const pick=({id,alias,age,flag,pre,post,goal,goalPrice,stormFrom,savings,hearts,store,weeks,reached,startedAt,finishedAt,durationSec,status,settings})=>({id,alias,age,flag,pre,post,goal,goalPrice,stormFrom:stormFrom||null,savings,hearts,store,weeks,reached:!!reached,startedAt,finishedAt:finishedAt||null,durationSec:durationSec||null,status,settings});
+  return JSON.parse(JSON.stringify(pick(s)));
+}
+let writing=Promise.resolve();
+function save(){
+  const rec=record(S);
+  const local=()=>{const all=ls.get('ha.sessions',[]).filter(x=>x.id!==rec.id);all.push(rec);ls.set('ha.sessions',all);if(mode==='local'){SESS=all;renderAdult()}};
+  local();
+  if(db&&dbWrite){writing=writing.then(()=>db.collection('sessions').doc(rec.id).set(rec)).then(()=>{S.saveMsg='Oturum kaydedildi.';const e=$('#saveSt');if(e)e.textContent=S.saveMsg}).catch(e=>{if(e&&e.code==='invalid_argument')dbWrite=false;S.saveMsg='Veritabanına yazılamadı, bu tarayıcıya kaydedildi.';const el=$('#saveSt');if(el)el.textContent=S.saveMsg})}
+  else S.saveMsg='Bu tarayıcıya kaydedildi.';
+}
+function loadLocal(){SESS=ls.get('ha.sessions',[]);const s=ls.get('ha.settings',null);if(s)SET={...SET,...s};mode='local';renderAdult();fillSettings()}
+
+async function initDb(){
+  let d=null;try{d=await window.claude?.use?.('db')}catch{}
+  if(!d){loadLocal();return}
+  db=d;mode='db';
+  const timer=setTimeout(()=>{$('#rMode').textContent='Veritabanına henüz ulaşılamadı; gösterilenler eski olabilir.'},10000);
+  db.collection('sessions').onSnapshot(snap=>{if(!snap.metadata.fromCache)clearTimeout(timer);SESS=snap.docs.map(x=>({...x.data(),id:x.id}));renderAdult()},()=>{clearTimeout(timer);db=null;loadLocal()});
+  db.doc('settings/main').onSnapshot(s=>{if(s.exists){SET={...SET,...s.data()};fillSettings()}},()=>{});
+  try{const u=await window.claude?.use?.('user');const c=await u?.can?.('data.write');if(c===false)dbWrite=false}catch{}
+  renderAdult();
+}
+
+/* ---------- parent view ---------- */
+function fillSettings(){if(document.activeElement&&document.activeElement.closest&&document.activeElement.closest('#setForm'))return;$('#setHarclik').value=SET.harclik;$('#setFaiz').value=SET.faiz}
+$('#setForm').addEventListener('submit',async e=>{e.preventDefault();
+  const h=Math.max(50,Math.min(1000,r10(+$('#setHarclik').value||200))),f=Math.max(0,Math.min(20,Math.round(+$('#setFaiz').value||0)));
+  SET={harclik:h,faiz:f};ls.set('ha.settings',SET);fillSettings();
+  if(S&&S.step==='start')S.settings={...SET};
+  if(db&&dbWrite){try{await db.doc('settings/main').set(SET);$('#setStatus').textContent='Kaydedildi. Yeni oyunlar bu ayarla başlar.'}catch{$('#setStatus').textContent='Bu tarayıcıya kaydedildi.'}}else $('#setStatus').textContent='Bu tarayıcıya kaydedildi.';
+});
+function done(){return SESS.filter(s=>s.status==='tamam').sort((a,b)=>String(b.finishedAt).localeCompare(String(a.finishedAt)))}
+const score=a=>(a||[]).filter(x=>x.ok).length;
+function renderParent(){
+  const list=done(),sel=$('#kidSel');
+  if(!list.length){sel.innerHTML='<option>Henüz tamamlanan oyun yok</option>';sel.disabled=true;$('#kidOut').innerHTML='<p class="empty">Çocuğunuz bir oyunu bitirdiğinde özeti burada görünür.</p>';return}
+  sel.disabled=false;if(!list.some(s=>s.id===kidPick))kidPick=list[0].id;
+  sel.innerHTML=list.map(s=>'<option value="'+esc(s.id)+'"'+(s.id===kidPick?' selected':'')+'>'+esc(s.alias)+' · '+esc(s.age)+' yaş · '+new Date(s.finishedAt).toLocaleDateString('tr-TR')+'</option>').join('');
+  const s=list.find(x=>x.id===kidPick),pre=score(s.pre),post=score(s.post);
+  const byK=(arr,k)=>(arr||[]).find(x=>x.k===k);
+  const weak=CK.find(k=>!byK(s.post,k)?.ok);
+  const g=GOALS.find(x=>x.id===s.goal);
+  const talks={ihtiyac:'Bu hafta alışverişte birlikte “bu ihtiyaç mı, istek mi?” diye sorun.',plan:'Bir hedef seçin ve “haftada ne kadar biriktirirsek kaç haftada olur?” hesabını birlikte yapın.',karsilastirma:'Bir ürünün fiyatını iki farklı yerde birlikte karşılaştırın.',enflasyon:'Geçen yıl aldığınız bir şeyin bugünkü fiyatını birlikte bulun.',guvenlik:'Şifre veya kart bilgisi isteyen bir mesaj gelirse ne yapacağını birlikte konuşun.'};
+  $('#kidOut').innerHTML='<div class="kpis"><div class="kpi"><span>Ön test</span><b>'+pre+' / 5</b></div><div class="kpi"><span>Son test</span><b>'+post+' / 5</b></div><div class="kpi"><span>'+esc(g?g.ad:'Hedef')+'</span><b>'+(s.reached?'Ulaştı':'Ulaşmadı')+'</b></div></div>'+
+   '<h3 style="font-size:19px;margin:6px 0 8px">Kavramlar</h3><ul class="cl"><li><b>Kavram</b><b>Önce</b><b>Sonra</b></li>'+CK.map(k=>'<li><span>'+CONCEPTS[k]+'</span>'+[s.pre,s.post].map(a=>byK(a,k)?.ok?'<span class="y">Bildi</span>':'<span class="x">Bilmedi</span>').join('')+'</li>').join('')+'</ul>'+
+   '<h3 style="font-size:19px;margin:16px 0 8px">Harçlığın ne kadarını biriktirdi?</h3><div class="wk">'+(s.weeks||[]).map(w=>'<div class="wkr"><span>'+w.w+'. hafta</span><div class="t"><i style="width:'+w.pay+'%"></i></div><span>%'+w.pay+'</span></div>').join('')+'</div>'+
+   '<div class="talk"><b>Bu hafta birlikte konuşun:</b> '+(weak?talks[weak]:'Tüm kavramları bildi. Bir sonraki birikim hedefini birlikte seçin.')+'</div>';
+}
+$('#kidSel').addEventListener('change',e=>{kidPick=e.target.value;renderParent()});
+
+/* ---------- research view ---------- */
+function stats(list){
+  const n=list.length,avg=a=>n?a.reduce((x,y)=>x+y,0)/n:0;
+  const pre=avg(list.map(s=>score(s.pre))),post=avg(list.map(s=>score(s.post)));
+  const reach=n?list.filter(s=>s.reached).length/n*100:0;
+  const per=CK.map(k=>{const f=a=>n?list.filter(s=>(s[a]||[]).find(x=>x.k===k)?.ok).length/n*100:0;return{k,pre:f('pre'),post:f('post')}});
+  const w1=avg(list.map(s=>s.weeks?.[0]?.pay||0)),w4=avg(list.map(s=>s.weeks?.[3]?.pay||0));
+  return{n,pre,post,reach,per,w1,w4};
+}
+function renderResearch(){
+  const list=done(),st=stats(list),open=SESS.filter(s=>s.status!=='tamam').length;
+  $('#rMode').textContent=(mode==='db'?'Veriler bu sayfanın veritabanında; aynı linki açan cihazlardan gelen oturumlar burada toplanır.':'Veriler sadece bu tarayıcıda saklanıyor; pilotu tek cihazda yapın ve sonunda CSV’yi alın.')+(open?' Yarım kalan oturum: '+open+'.':'');
+  const f1=v=>v.toLocaleString('tr-TR',{maximumFractionDigits:1});
+  $('#rTitle').textContent=st.n?'Son testte ortalama '+f1(st.post-st.pre)+' soru daha fazla doğru':'Pilot sonuçları';
+  $('#kpis').innerHTML=[['Tamamlanan oturum',st.n],['Ön test ort.',f1(st.pre)+' / 5'],['Son test ort.',f1(st.post)+' / 5'],['1. hafta biriktirme','%'+Math.round(st.w1)],['4. hafta biriktirme','%'+Math.round(st.w4)],['Hedefe ulaşan','%'+Math.round(st.reach)]].map(([a,b])=>'<div class="kpi"><span>'+a+'</span><b>'+b+'</b></div>').join('');
+  $('#dumb').innerHTML=st.n?st.per.map(r=>{const lo=Math.min(r.pre,r.post),hi=Math.max(r.pre,r.post);return'<div class="drow"><span>'+CONCEPTS[r.k]+'</span><div class="track"><div class="ln'+(r.post<r.pre?' neg':'')+'" style="left:'+lo+'%;width:'+(hi-lo)+'%"></div><div class="d pre" style="left:'+r.pre+'%"></div><div class="d post" style="left:'+r.post+'%"></div></div><span class="v">%'+Math.round(r.pre)+' → %'+Math.round(r.post)+'</span></div>'}).join(''):'<p class="empty">İlk oturum tamamlandığında kavram sonuçları burada görünür.</p>';
+  const rows=[...SESS].sort((a,b)=>String(b.startedAt).localeCompare(String(a.startedAt)));
+  $('#sessTable').innerHTML='<thead><tr><th>Takma ad</th><th>Yaş</th><th>Tarih</th><th>Durum</th><th>Ön</th><th>Son</th><th>Biriktirme H1→H4</th><th>Kumbara</th><th>Hedef</th><th>Süre</th><th></th></tr></thead><tbody>'+(rows.length?rows.map(s=>'<tr><td data-l="Takma ad">'+esc(s.alias)+'</td><td data-l="Yaş" class="n">'+esc(s.age)+'</td><td data-l="Tarih">'+new Date(s.startedAt).toLocaleDateString('tr-TR')+'</td><td data-l="Durum"><span class="tag'+(s.status==='tamam'?' ok':'')+'">'+(s.status==='tamam'?'Tamam':'Yarım')+'</span></td><td data-l="Ön" class="n">'+score(s.pre)+'</td><td data-l="Son" class="n">'+(s.status==='tamam'?score(s.post):'')+'</td><td data-l="Biriktirme H1→H4" class="n">'+(s.weeks?.length?'%'+s.weeks[0].pay+' → %'+s.weeks[s.weeks.length-1].pay:'')+'</td><td data-l="Kumbara">'+esc(s.store==='fener'?'Fener':s.store==='yastik'?'Yastık':'')+'</td><td data-l="Hedef">'+(s.status==='tamam'?(s.reached?'Ulaştı':'Ulaşmadı'):'')+'</td><td data-l="Süre" class="n">'+(s.durationSec?Math.round(s.durationSec/60)+' dk':'')+'</td><td data-l=""><button class="btn small ghost" data-del="'+esc(s.id)+'" type="button">Sil</button></td></tr>').join(''):'<tr><td colspan="11" class="empty">Henüz oturum yok. Oyun sekmesinden ilk oyunu başlatın.</td></tr>')+'</tbody>';
+  $('#sessTable').querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
+    if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Emin misin?';return}
+    const id=b.dataset.del;ls.set('ha.sessions',ls.get('ha.sessions',[]).filter(x=>x.id!==id));
+    if(db&&dbWrite){try{await db.collection('sessions').doc(id).delete()}catch{}}else{SESS=SESS.filter(x=>x.id!==id);renderAdult()}
+  });
+}
+function csv(){
+  const head=['id','takma_ad','yas','baslangic','durum','sure_sn','harclik','faiz','on_test','son_test','fark',...CK.map(k=>'on_'+k),...CK.map(k=>'son_'+k),...[1,2,3,4].flatMap(w=>['h'+w+'_biriktir_pay','h'+w+'_karar','h'+w+'_karar_ms','h'+w+'_duzeltme']),'hedef','hedef_fiyat','son_kumbara','kumbara_yeri','hedefe_ulasti','paylas_tl'];
+  const q=v=>{v=v==null?'':String(v);return /[",\n;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+  const lines=SESS.map(s=>{const b=k=>a=>{const x=(s[a]||[]).find(y=>y.k===k);return x?(x.ok?1:0):''};const W=w=>s.weeks?.find(x=>x.w===w)||{};
+    return[s.id,s.alias,s.age,s.startedAt,s.status,s.durationSec,s.settings?.harclik,s.settings?.faiz,score(s.pre),s.status==='tamam'?score(s.post):'',s.status==='tamam'?score(s.post)-score(s.pre):'',...CK.map(k=>b(k)('pre')),...CK.map(k=>b(k)('post')),...[1,2,3,4].flatMap(w=>[W(w).pay,W(w).g,W(w).ms,W(w).edits]),s.goal,s.goalPrice,s.savings,s.store,s.status==='tamam'?(s.reached?1:0):'',s.hearts].map(q).join(',')});
+  return[head.join(','),...lines].join('\n');
+}
+$('#csvCopy').onclick=async()=>{try{await navigator.clipboard.writeText(csv());$('#csvStatus').textContent='CSV panoya kopyalandı ('+SESS.length+' oturum).'}catch{$('#csvStatus').textContent='Kopyalanamadı; tarayıcı panoya izin vermedi.'}};
+let dl=null;
+if(window.claude){(async()=>{try{dl=await window.claude.use('downloads')}catch{}if(dl)$('#csvDown').hidden=false})()}else $('#csvDown').hidden=false;
+$('#csvDown').onclick=async()=>{const name='harclik-adasi-pilot.csv';
+  if(!dl){const u=URL.createObjectURL(new Blob(['﻿'+csv()],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);$('#csvStatus').textContent='CSV indirildi.';return}
+  try{await dl.save({filename:name,data:csv()});$('#csvStatus').textContent='CSV indirildi.'}catch{$('#csvStatus').textContent='İndirme iptal edildi.'}};
+
+function renderAdult(){renderParent();renderResearch()}
+
+/* ---------- routing ---------- */
+function route(){
+  const v=['oyun','ebeveyn','arastirma'].includes(location.hash.slice(1))?location.hash.slice(1):'oyun';
+  ['oyun','ebeveyn','arastirma'].forEach(x=>{$('#v-'+x).hidden=x!==v});
+  document.querySelectorAll('.top nav a').forEach(a=>{if(a.dataset.v===v)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  if(v!=='oyun')renderAdult();
+}
+window.addEventListener('hashchange',route);
+
+const start=data=>{S=data&&data.S&&data.S.step?data.S:fresh();if(data&&data.SET)SET=data.SET;loadLocal();route();render();initDb()};
+window.claude?.hot?.snapshot?.(()=>({S,SET}));
+window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
+}
+</script>
+</body>
+</html>
